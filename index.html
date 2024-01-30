@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вездеход</title>
+    <style>
+        #container {
+            position: relative;
+        }
+
+        #square {
+            width: 200px;
+            height: 200px;
+            background-color: lightblue;
+            position: absolute;
+        }
+
+        #circle {
+            width: 10px;
+            height: 10px;
+            background-color: red;
+            border-radius: 50%;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none; /* Чтобы окружность не мешала событиям мыши на квадрате */
+        }
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <div id="square">
+        <div id="circle"></div>
+    </div>
+
+</div>
+
+<script>
+
+  function cl(str) {
+    console.log(str);
+  }
+
+  let container = document.getElementById('container');
+  let square = document.getElementById('square');
+  let circle = document.getElementById('circle');
+  let isMouseDown = false;
+
+  container.addEventListener('mousedown', function (event) {
+    isMouseDown = true;
+    readChords(event);
+  });
+
+  document.addEventListener('mouseup', function () {
+    isMouseDown = false;
+    // Возвращаем окружность в центр
+    circle.style.left = '50%';
+    circle.style.top = '50%';
+    socket.send('0,0,0,0');
+  });
+
+  container.addEventListener('mousemove', function (event) {
+    readChords(event)
+  });
+
+  function readChords(event){
+    // Обновляем положение окружности только при зажатой кнопке мыши
+    if (isMouseDown) {
+      let x = event.clientX - square.getBoundingClientRect().left;
+      let y = event.clientY - square.getBoundingClientRect().top;
+      console.log('Координаты внутри квадрата: x = ' + x + ', y = ' + y);
+      //socket.send('Координаты внутри квадрата: x = ' + x + ', y = ' + y);
+      let el1, el2, el3, el4;
+      //Разбиваем на 4 квадрата
+      //   1  2
+      //   3  4
+
+     /* if (x < 95 && y < 95) {
+         el1 = el3 = 1;
+        el4 = el2 = 255 - (100-y) * 2.5;
+        el2 = ((100 - x) * 2.5)
+
+
+        if(el2 > 255) {
+          el2 = 255;
+        }
+      }*/
+    //  console.log(Math.round(el1)+','+ Math.round(el2)+','+Math.round(el3)+','+ Math.round(el4));
+     // socket.send(Math.round(el1)+','+ Math.round(el2)+','+Math.round(el3)+','+ Math.round(el4));
+
+      if(y < 95) {
+        el1 = el3 = 1;
+        el2 = el4 = 255 - (100-y) * 2.5;
+        if(el2 < 10) {
+          el2 = el4 = 0;
+        }
+      } else if (y > 105) {
+        el1 = el3 = 0;
+        el2 = el4 = -(100-y) * 2.5;
+        if(el2 > 245) {
+          el2 = el4 = 255;
+        }
+      } else { //Для положения, когда крутимся на месте
+        el1 = el3 = 2; //Чтобы не зависило от х
+      }
+
+
+      if(x < 90) {
+        /*if(el1 === 1) {
+          el2 = (100-x) * 2.5;
+        }*/
+
+        /*el1 = el3 = 1;
+        el2 = el4 = 255 - (100-x) * 2.5;
+        if(el2 < 10) {
+          el2 = el4 = 0;
+        }*/
+      } else if (x > 110) {
+        /*if(el1 === 1) {
+          el4 = (x - 100) * 2.5;
+        }*/
+        /*el1 = el3 = 0;
+        el2 = el4 = -(100-x) * 2.5;
+        if(el2 > 245) {
+          el2 = el4 = 255;
+        }*/
+      }
+
+      //Лево - право на месте
+      if (el1 === 2) {
+        if(x < 90) {
+          el1 = 0;
+          el2 = (100-x) * 2.5;
+          el3 = 1;
+          el4 = 255 - el2;
+        } else {
+          el1 = 1;
+          el4 = (x - 100) * 2.5;
+          el3 = 0;
+          el2 = 255 - el4;
+        }
+      }
+
+
+      console.log(Math.round(el1)+','+ Math.round(el2)+','+Math.round(el3)+','+ Math.round(el4));
+
+      socket.send(Math.round(el1)+','+ Math.round(el2)+','+Math.round(el3)+','+ Math.round(el4));
+      circle.style.left = x + 'px';
+      circle.style.top = y + 'px';
+    }
+  }
+
+  let socket = new WebSocket("ws://192.168.1.157:81/");
+
+  socket.onopen = function(event) {
+    console.log("WebSocket opened:", event);
+  };
+
+  socket.onmessage = function(event) {
+    console.log("WebSocket message:", event.data);
+  };
+
+  socket.onclose = function(event) {
+    console.log("WebSocket closed:", event);
+  };
+</script>
+
+</body>
+</html>
